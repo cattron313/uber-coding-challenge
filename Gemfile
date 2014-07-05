@@ -49,5 +49,7 @@ gem 'foreman'
 # Heroku integration for Rails 4
 gem 'rails_12factor', group: :production
 
-# TDD
-gem 'rspec', '~> 3.0.0'
+# TDD with rspec
+group :development, :test do
+  gem 'rspec-rails', '~> 3.0.0'
+end
