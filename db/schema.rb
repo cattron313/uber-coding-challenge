@@ -39,22 +39,24 @@ ActiveRecord::Schema.define(version: 20140707012707) do
     t.decimal  "lat",         precision: 10, scale: 6
     t.text     "description"
     t.text     "address"
-    t.integer  "vehicle_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
-  add_index "locations", ["vehicle_id"], name: "index_locations_on_vehicle_id", using: :btree
+  add_index "locations", ["lat", "lon"], name: "index_locations_on_lat_and_lon", unique: true, using: :btree
 
   create_table "vehicles", force: true do |t|
     t.string   "vehicle_type"
     t.integer  "datasf_object_id"
     t.string   "status"
     t.integer  "vendor_id"
+    t.integer  "location_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
+  add_index "vehicles", ["datasf_object_id"], name: "index_vehicles_on_datasf_object_id", unique: true, using: :btree
+  add_index "vehicles", ["location_id"], name: "index_vehicles_on_location_id", using: :btree
   add_index "vehicles", ["vendor_id"], name: "index_vehicles_on_vendor_id", using: :btree
 
   create_table "vendors", force: true do |t|

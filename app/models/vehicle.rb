@@ -1,7 +1,7 @@
 class Vehicle < ActiveRecord::Base
   belongs_to :vendor
-  has_many :locations
+  belongs_to :location
 
-  validates :datasf_object_id, :presence => true
-  validates :locations, :presence => true
+  validates :datasf_object_id, :presence => true, :uniqueness => true
+  validates :location, :presence => true
 end

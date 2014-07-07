@@ -5,9 +5,10 @@ class CreateLocations < ActiveRecord::Migration
       t.decimal :lat, precision: 10, scale: 6
       t.text :description
       t.text :address
-      t.references :vehicle, index: true
 
       t.timestamps
     end
+
+    add_index :locations, [:lat, :lon], unique: true
   end
 end
