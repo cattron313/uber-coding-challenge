@@ -1,8 +1,6 @@
 namespace :scheduler do
 	require "net/http"
 	require "json"
-	require 'bigdecimal'
-	require 'bigdecimal/util'
 
 	desc "This task is called by the Heroku scheduler add-on to update restuarant db with json from DataSF Food Trucks"
 	task :update_database => :environment do
@@ -23,8 +21,8 @@ namespace :scheduler do
 					vehicle.vehicle_type = blob["facilitytype"] unless vehicle.vehicle_type == blob["applicant"]
 					vehicle.status = blob["status"] unless vehicle.status == blob["status"]
 
-					lat = blob["latitude"].to_d.round(6)
-					lon = blob["longitude"].to_d.round(6)
+					lat = Location.convert_lat_or_lon_to_d(blob["latitude"])
+					lon = Location.convert_lat_or_lon_to_d(blob["longitude"])
 					if !vehicle.location.where(lat: lat, lon: lon).exists?
 						if location = Location.find_by(lat: lat, lon: lon)
 							vehicle.location = location
@@ -58,9 +56,9 @@ namespace :scheduler do
 
  		data.each do |blob| # create new record
  			if blob["latitude"] && blob["longitude"] && !Vehicle.exists?(datasf_object_id: blob["objectid"].to_i)
- 				location = Location.find_by(lat: blob["latitude"].to_d.round(6), lon: blob["longitude"].to_d.round(6))
+ 				location = Location.find_by(lat: Location.convert_lat_or_lon_to_d(blob["latitude"]), lon: Location.convert_lat_or_lon_to_d(blob["longitude"]))
  				if !location
- 					location = Location.new(lat: blob["latitude"].to_d.round(6), lon: blob["longitude"].to_d.round(6), description: blob["locationdescription"], address: blob["address"])
+ 					location = Location.new(lat: Location.convert_lat_or_lon_to_d(blob["latitude"]), lon: Location.convert_lat_or_lon_to_d(blob["longitude"]), description: blob["locationdescription"], address: blob["address"])
  					location.save!
  				end
  				vehicle = nil
