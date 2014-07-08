@@ -8,6 +8,7 @@ class Location < ActiveRecord::Base
 	has_many :vehicles
 
 	def self.convert_lat_or_lon_to_d(str)
-		return str.to_d.round(6)
+		#converting to radians
+		return (str.to_d * Math::PI / 180).round(6) 
 	end
 end
