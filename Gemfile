@@ -54,5 +54,8 @@ group :development, :test do
   gem 'rspec-rails', '~> 3.0.0'
 end
 
-#Figaro for managing environment variables
+# Figaro for managing environment variables
 gem 'figaro'
+
+# Installing Foundation
+gem 'foundation-rails'

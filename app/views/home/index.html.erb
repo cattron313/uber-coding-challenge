@@ -1,19 +1,22 @@
 <h1>Home#index</h1>
 <p>Find me in app/views/home/index.html.erb</p>
 <div id="map-canvas" style="width: 500px; height: 500px"/>
-<%= javascript_include_tag "//maps.googleapis.com/maps/api/js?key=" + ENV["GOOGLE_MAPS_API_KEY"]%>
-<script type="text/javascript">
-	(function(win){
-		$(document).ready(function() {
-			$.ajax({
-				url: "/locations?lat=37.73461&lon=-122.39255",
-				contentType: "application/json",
-				success:function(data, textStaus, jqXHR) {
-					console.log(data);
-					var mapOptions = { center: new google.maps.LatLng(-34.397, 150.644), zoom: 8 };
-			        var map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
-				}
+
+<% content_for :page_js do %>
+	<%= javascript_include_tag "//maps.googleapis.com/maps/api/js?key=" + ENV["GOOGLE_MAPS_API_KEY"]%>
+	<script type="text/javascript">
+		(function(win){
+			$(document).ready(function() {
+				$.ajax({
+					url: "/locations?lat=37.73461&lon=-122.39255",
+					contentType: "application/json",
+					success:function(data, textStaus, jqXHR) {
+						console.log(data);
+						var mapOptions = { center: new google.maps.LatLng(-34.397, 150.644), zoom: 8 };
+				        var map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+					}
+				});
 			});
-		});
-	})(window);
-</script>
+		})(window);
+	</script>
+<% end %>
