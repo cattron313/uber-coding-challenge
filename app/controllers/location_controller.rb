@@ -1,5 +1,5 @@
 class LocationController < ApplicationController
-  	@@DISTANCE = 3.21869 # limiting distance we want to look for trucks in km (2mi)
+  	@@DISTANCE = 2.414016 # limiting distance we want to look for trucks in km (1.5mi)
 	@@EARTH_RADIUS = 6371 # approximation of Earth's radius in km
 	def index
 		render text: "Cannot show nearby locations without a lat and lon.", status: :bad_request and return unless params["lat"] && params["lon"]

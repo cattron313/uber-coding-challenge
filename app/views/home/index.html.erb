@@ -9,15 +9,42 @@
 	<script type="text/javascript">
 		(function(win){
 			$(document).ready(function() {
-				$.ajax({
-					url: "/locations?lat=37.73461&lon=-122.39255",
-					contentType: "application/json",
-					success:function(data, textStaus, jqXHR) {
-						console.log(data);
-						var mapOptions = { center: new google.maps.LatLng(-34.397, 150.644), zoom: 4 };
-				        var map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
-					}
+				var map = null;
+
+				var Locations = Backbone.Collection.extend({
+					// gets location objets from server filtering by latitude and longitude
+					url: "/locations?lat=37.73461&lon=-122.39255"
 				});
+
+			    var LocationsMapView = Backbone.View.extend({
+			    	el: 'body',
+			    	render: function () {
+				        (new Locations).fetch({
+				        	success: function (locations) {
+				        		//adds markers to map
+				        		_.each(locations.models, function(location) {
+				        			var marker = new google.maps.Marker({
+								    	position: new google.maps.LatLng(location.get('lat') * 180 / Math.PI, location.get('lon') * 180 / Math.PI),
+								    	map: map
+								    });
+				        		});
+				        	}
+				    	});
+				    }
+			    });
+
+				var Router = Backbone.Router.extend({
+			        routes: { "": "home" }
+			    });
+
+			    (new Router).on('route:home', function() {
+			    	//render home page by showing map and adding markers
+					var mapOptions = { center: new google.maps.LatLng(37.73461, -122.39255), zoom: 15, zoomControl: true };
+		        	map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+		        	(new LocationsMapView).render();
+			    });
+
+			    Backbone.history.start();
 			});
 		})(window);
 	</script>
