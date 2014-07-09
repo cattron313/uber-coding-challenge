@@ -4,7 +4,7 @@
 	(function(win){
 		$(document).ready(function() {
 			$.ajax({
-				url: "/trucks?lat=37.73461&lon=-122.39255",
+				url: "/locations?lat=37.73461&lon=-122.39255",
 				contentType: "application/json",
 				success:function(data, textStaus, jqXHR) {
 					console.log(data);
