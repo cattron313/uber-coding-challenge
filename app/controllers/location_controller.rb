@@ -1,3 +1,4 @@
+require 'json'
 class LocationController < ApplicationController
   	@@DISTANCE = 2.414016 # limiting distance we want to look for trucks in km (1.5mi)
 	@@EARTH_RADIUS = 6371 # approximation of Earth's radius in km
@@ -32,6 +33,20 @@ class LocationController < ApplicationController
 		end
 		respond_to do |format|
 			format.json { render json: locations }
+			format.html { render :nothing }
+		end
+	end
+
+	def info
+		render text: "Cannot show location info without an id", status: :bad_request and return unless params["id"]
+		location = Location.find(params["id"])
+		info = []
+		unique_vendors_at_location = Vendor.joins(vehicles: :location).where("locations.id = ?", params["id"]).uniq
+		unique_vendors_at_location.each do |vendor|
+			info << {name: vendor.name, address: location.address, food_items: vendor.food_description }
+		end
+		respond_to do |format|
+			format.json { render json: info.to_json}
 			format.html { render :nothing }
 		end
 	end

@@ -6,14 +6,35 @@
 
 <% content_for :page_js do %>
 	<%= javascript_include_tag "//maps.googleapis.com/maps/api/js?key=" + ENV["GOOGLE_MAPS_API_KEY"]%>
+	<script type="text/template" id="location_marker_info">
+		<@ _.each(information, function(info) { @>
+			<h1><@- info.get('name') @></h1>
+			<h4><@- info.get('address') @></h4>
+			<p><@- info.get('food_items') @></p>
+			<hr/>
+		<@ }); @> 
+	</script>
 	<script type="text/javascript">
 		(function(win){
 			$(document).ready(function() {
-				var map = null, markers = [];
-
+				var map = null, markers = [], lastOpenedInfoWindow = null;
+				_.templateSettings = {
+				    interpolate: /\<\@\=(.+?)\@\>/gim,
+				    evaluate: /\<\@([\s\S]+?)\@\>/gim,
+				    escape: /\<\@\-(.+?)\@\>/gim
+				};
 				var Locations = Backbone.Collection.extend({
 					// gets location objets from server filtering by latitude and longitude
 					url: "/locations?lat=37.73461&lon=-122.39255"
+				});
+
+				var LocationInfo = Backbone.Collection.extend({
+					url: function() {
+						return "/location/" + this.id + "/info"
+					},
+					initialize: function(models, options) {
+						this.id = options.id;
+					}
 				});
 
 			    var LocationsMapView = Backbone.View.extend({
@@ -29,6 +50,21 @@
 								    	map: map
 								    });
 								    bounds.extend(marker.getPosition());
+								    google.maps.event.addListener(marker, 'click', function() { //should use event delegation here, performance concern
+								    	(new LocationInfo([], { id: location.id })).fetch({
+								    		success: function(information) {
+
+								    			var contentString = _.template($("#location_marker_info").html(),
+								    				{ information: information.models });
+								    			var infowindow = new google.maps.InfoWindow({
+		      										content: contentString
+		  										});
+		    									infowindow.open(map,marker);
+		    									lastOpenedInfoWindow = infowindow;
+								    		}
+								    	});
+								    	if (lastOpenedInfoWindow) { lastOpenedInfoWindow.close(); }
+									});
 								    markers.push(marker);
 				        		});
 				        		map.fitBounds(bounds); //re-center map to include all markers
