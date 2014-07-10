@@ -9,7 +9,7 @@
 	<script type="text/javascript">
 		(function(win){
 			$(document).ready(function() {
-				var map = null;
+				var map = null, markers = [];
 
 				var Locations = Backbone.Collection.extend({
 					// gets location objets from server filtering by latitude and longitude
@@ -22,12 +22,16 @@
 				        (new Locations).fetch({
 				        	success: function (locations) {
 				        		//adds markers to map
+				        		var bounds = new google.maps.LatLngBounds();
 				        		_.each(locations.models, function(location) {
 				        			var marker = new google.maps.Marker({
 								    	position: new google.maps.LatLng(location.get('lat') * 180 / Math.PI, location.get('lon') * 180 / Math.PI),
 								    	map: map
 								    });
+								    bounds.extend(marker.getPosition());
+								    markers.push(marker);
 				        		});
+				        		map.fitBounds(bounds); //re-center map to include all markers
 				        	}
 				    	});
 				    }

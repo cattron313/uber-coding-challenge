@@ -61,6 +61,7 @@ ActiveRecord::Schema.define(version: 20140707012707) do
 
   create_table "vendors", force: true do |t|
     t.text     "name"
+    t.text     "food_description"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
