@@ -1,7 +1,7 @@
 (function(win){
 	$(document).ready(function() {
 		//initilization for Google Maps
-		var markers = [], lastOpenedInfoWindow = null;
+		var markers = [], lastOpenedInfoWindow = null, view = null;
 		_.templateSettings = {
 			interpolate: /\<\@\=(.+?)\@\>/gim,
 			evaluate: /\<\@([\s\S]+?)\@\>/gim,
@@ -15,8 +15,6 @@
     	});
     	var searchBox = new google.maps.places.Autocomplete($("#address")[0]);
 		searchBox.bindTo('bounds', map);
-
-    	setupEventHandlers(map, lastLocation);
 
 		//define Backbone Collections
 		var Locations = Backbone.Collection.extend({
@@ -57,30 +55,29 @@
 			}
 		});
 
-		//setting default location on map
-    	$("#address").val("1679 Palou Avenue, San Francisco");
-    	(new LocationsMapView).render({lat: lastLocation.lat(), lon: lastLocation.lng() });
+		view = (new LocationsMapView);
+    	setupEventHandlers(map, lastLocation, view);
 
-		function setupEventHandlers(map, last) {
+		//setting default location on map controls
+    	$("#address").val("1679 Palou Avenue, San Francisco");
+    	view.render({lat: lastLocation.lat(), lon: lastLocation.lng() });
+
+    	//helper functions
+		function setupEventHandlers(map, last, view) {
 			google.maps.event.addListener(searchBox, 'place_changed', function() {
 				var place = searchBox.getPlace();
 				if (!place.geometry) { 
 					alert("Could not find any location to match your search.  Please try again.");
 					return;
 				}
-				last = place.geometry.location;
-				map.setCenter(place.geometry.location);
-				(new LocationsMapView).render({
-					lat: place.geometry.location.lat(),
-					lon: place.geometry.location.lng(),
-					food: $("#food").val()
-				});
+				updateMapsUI(map, last, place.geometry.location, view);
 			});
 
 			$("#food").keyup(function(e) {
 				var foodText = $("#food").val() || null;
-				if (e.which === 13) {
-					(new LocationsMapView).render({
+				var keyPressed = e.which || e.keyCode;
+				if (keyPressed === 13) {
+					view.render({
 						lat: last.lat(),
 						lon: last.lng(),
 						food: foodText
@@ -91,6 +88,36 @@
 			$("#toggle_drawer").click(function(e) {
 				$("#map_container").toggleClass("drawer_open");
 				return false;
+			});
+
+			$("#clear").click(function(e) {
+				var e = $.Event( "keyup", { which: 13 } );
+				$("#food").val("");
+				$("#food").trigger(e);
+				return false;
+			});
+
+			$("#current_location").click(function(e) {
+				if (navigator.geolocation) {
+			        navigator.geolocation.getCurrentPosition(handleNavigatorFoundPosition);
+			    } else { 
+			        alert("Geolocation is not supported by this browser.");
+			    }
+				return false;
+			});
+		}
+		function handleNavigatorFoundPosition(position) {
+			$("#address").val("");
+			updateMapsUI(map, lastLocation, new google.maps.LatLng(position.coords.latitude, position.coords.longitude), view);
+		}
+
+		function updateMapsUI(map, last, location, view) {
+			last = location;
+			map.setCenter(location);
+			view.render({
+				lat: location.lat(),
+				lon: location.lng(),
+				food: $("#food").val()
 			});
 		}
 
