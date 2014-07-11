@@ -87,6 +87,11 @@
 					});
 				}
 			});
+
+			$("#toggle_drawer").click(function(e) {
+				$("#map_container").toggleClass("drawer_open");
+				return false;
+			});
 		}
 
 		function removeAllMarkers(markers) {

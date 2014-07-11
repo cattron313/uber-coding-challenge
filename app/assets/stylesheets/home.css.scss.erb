@@ -1,0 +1,67 @@
+// Place all the styles related to the Home controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: http://sass-lang.com/
+
+@mixin transition($transition) {
+	-webkit-transition: $transition; /* For Safari 3.1 to 6.0 */
+    transition: $transition;
+}
+
+body {
+	background: url(<%= asset_path 'cartographer.png' %>) repeat;
+}
+
+#map_container {
+	@include transition(height 1s);
+}
+
+.fullscreen {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	max-width: none;
+}
+
+.drawer_open {
+	height: 95%;
+}
+
+#map-canvas {
+	width: 100%;
+	height: 100%;
+}
+
+/* Fixes bug where Google Maps zoom controls were broken. */
+#map-canvas img {
+    max-width: none;
+}
+
+#drawer {
+	height: 5%;
+
+	.columns {
+		padding-top: 1.5%;
+	}
+
+	.button {
+		position: absolute;
+		top: 17px;
+		right: 16px;
+	}
+}
+
+#toggle_drawer {
+	position: absolute;
+	z-index: 1;
+	bottom: 0;
+	left: 50%;
+	margin-left: -57.5px;
+}
+
+#food {
+	width: 84%;
+}
+
+#address {
+	width: 73%;
+}
