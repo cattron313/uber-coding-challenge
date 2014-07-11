@@ -21,7 +21,7 @@ class LocationController < ApplicationController
 		locations = nil
 		if params["food"]
 			locations = Location.joins({ vehicles: { vendor: :foods}})
-							.where("foods.name ilike ?", "%#{params['food']}%").where("status = 'APPROVED'")
+							.where("foods.name ilike ? OR foods.name ilike '%everything%'", "%#{params['food']}%").where("status = 'APPROVED'")
 							.where("lat BETWEEN ? AND ?", lat_min, lat_max).where("lon BETWEEN ? AND ?", lon_min, lon_max)
 							.where("acos(sin(?) * sin(lat) + cos(?) * cos(lat) * cos(lon - ?)) <= ?", lat, lat, lon, angular_radius)
 							# formula distance = arccos(sin(lat1) · sin(lat2) + cos(lat1) · cos(lat2) · cos(lon1 - lon2)) * earth_radius
@@ -41,12 +41,13 @@ class LocationController < ApplicationController
 		render text: "Cannot show location info without an id", status: :bad_request and return unless params["id"]
 		location = Location.find(params["id"])
 		info = []
-		unique_vendors_at_location = Vendor.joins(vehicles: :location).where("locations.id = ?", params["id"]).uniq
-		unique_vendors_at_location.each do |vendor|
-			info << {name: vendor.name, address: location.address, food_items: vendor.food_description }
-		end
+		unique_vendors_at_location = params["food"] ? Vendor.joins({ vehicles: :location }, :foods).where("locations.id = ?", params["id"])
+															.where("status = 'APPROVED'")
+															.where("foods.name ilike ? OR foods.name ilike '%everything%'", "%#{params['food']}%")
+															.uniq : Vendor.joins(vehicles: :location).where("locations.id = ?", params["id"])
+																		  .where("status = 'APPROVED'").uniq
 		respond_to do |format|
-			format.json { render json: info.to_json}
+			format.json { render json: unique_vendors_at_location }
 			format.html { render :nothing }
 		end
 	end

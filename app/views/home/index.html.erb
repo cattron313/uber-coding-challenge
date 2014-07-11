@@ -17,9 +17,8 @@
 <%= javascript_include_tag "//maps.googleapis.com/maps/api/js?key=" + ENV["GOOGLE_MAPS_API_KEY"] + "&libraries=places" %>
 <script type="text/template" id="location_marker_info">
 <@ _.each(information, function(info) { @>
-	<h1><@- info.get('name') @></h1>
-	<h4><@- info.get('address') @></h4>
-	<p><@- info.get('food_items') @></p>
+	<h3><@- info.get('name') @></h3>
+	<p><@- info.get('food_description') @></p>
 	<hr/>
 	<@ }); @> 
 </script>
@@ -45,12 +44,13 @@
 			}
 		});
 
-		var LocationInfo = Backbone.Collection.extend({
+		var Vendors = Backbone.Collection.extend({
 			url: function() {
-				return "/location/" + this.id + "/info"
+				return this.food ? "/location/" + this.id + "/info?food=" + this.food : "/location/" + this.id + "/info"
 			},
 			initialize: function(models, options) {
 				this.id = options.id;
+				this.food = options.food;
 			}
 		});
 
@@ -71,7 +71,7 @@
 			        			});
 			        			bounds.extend(marker.getPosition());
 							    google.maps.event.addListener(marker, 'click', function() { //should use event delegation here, performance concern
-							    	(new LocationInfo([], { id: location.id })).fetch({
+							    	(new Vendors([], { id: location.id, food: locations.food })).fetch({
 							    		success: function(information) {
 
 							    			var contentString = _.template($("#location_marker_info").html(),
