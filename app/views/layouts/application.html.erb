@@ -17,5 +17,6 @@
     <%= yield %>
     <%= javascript_include_tag "application" %>
     <%= yield(:page_js) %>
+    <%= javascript_include_tag params[:controller] %>
   </body>
 </html>
