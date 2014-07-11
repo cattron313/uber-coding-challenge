@@ -1,0 +1,25 @@
+<div class="row fullscreen" style="height: 90%;">
+	<div class="small-12 columns fullscreen">
+		<div id="map-canvas"></div>
+	</div>
+</div>
+<div class="row">
+	<div class="small-4 columns">
+		<input id="food" type="text" name="food" placeholder="pizza"/>
+	</div>
+	<div class="small-4 columns">
+		<input id="address" type="text" name="address" placeholder="123 Sesame Street, NY"/>
+		<a href="" class="button tiny">Current Location</a>
+	</div>
+</div>
+
+<% content_for :page_js do %>
+<%= javascript_include_tag "//maps.googleapis.com/maps/api/js?key=" + ENV["GOOGLE_MAPS_API_KEY"] + "&libraries=places" %>
+<script type="text/template" id="location_marker_info">
+<@ _.each(information, function(info) { @>
+	<h3><@- info.get('name') @></h3>
+	<p><@- info.get('food_description') @></p>
+	<hr/>
+	<@ }); @> 
+</script>
+<% end %>
