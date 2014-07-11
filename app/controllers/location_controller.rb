@@ -20,7 +20,7 @@ class LocationController < ApplicationController
 
 		locations = nil
 		if params["food"]
-			locations = Location.joins(:vehicles, { vendor: :foods})
+			locations = Location.joins({ vehicles: { vendor: :foods}})
 							.where("foods.name ilike ?", "%#{params['food']}%").where("status = 'APPROVED'")
 							.where("lat BETWEEN ? AND ?", lat_min, lat_max).where("lon BETWEEN ? AND ?", lon_min, lon_max)
 							.where("acos(sin(?) * sin(lat) + cos(?) * cos(lat) * cos(lon - ?)) <= ?", lat, lat, lon, angular_radius)

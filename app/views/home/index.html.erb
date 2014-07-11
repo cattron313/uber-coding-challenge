@@ -1,91 +1,155 @@
-<div class="row fullscreen">
+<div class="row fullscreen" style="height: 90%;">
 	<div class="small-12 columns fullscreen">
-		<div id="map-canvas"/>
+		<div id="map-canvas"></div>
+	</div>
+</div>
+<div class="row">
+	<div class="small-4 columns">
+		<input id="food" type="text" name="food" placeholder="pizza"/>
+	</div>
+	<div class="small-4 columns">
+		<input id="address" type="text" name="address" placeholder="123 Sesame Street, NY"/>
+		<a href="" class="button tiny">Current Location</a>
 	</div>
 </div>
 
 <% content_for :page_js do %>
-	<%= javascript_include_tag "//maps.googleapis.com/maps/api/js?key=" + ENV["GOOGLE_MAPS_API_KEY"]%>
-	<script type="text/template" id="location_marker_info">
-		<@ _.each(information, function(info) { @>
-			<h1><@- info.get('name') @></h1>
-			<h4><@- info.get('address') @></h4>
-			<p><@- info.get('food_items') @></p>
-			<hr/>
-		<@ }); @> 
-	</script>
-	<script type="text/javascript">
-		(function(win){
-			$(document).ready(function() {
-				var map = null, markers = [], lastOpenedInfoWindow = null;
-				_.templateSettings = {
-				    interpolate: /\<\@\=(.+?)\@\>/gim,
-				    evaluate: /\<\@([\s\S]+?)\@\>/gim,
-				    escape: /\<\@\-(.+?)\@\>/gim
-				};
-				var Locations = Backbone.Collection.extend({
-					// gets location objets from server filtering by latitude and longitude
-					url: "/locations?lat=37.73461&lon=-122.39255"
-				});
+<%= javascript_include_tag "//maps.googleapis.com/maps/api/js?key=" + ENV["GOOGLE_MAPS_API_KEY"] + "&libraries=places" %>
+<script type="text/template" id="location_marker_info">
+<@ _.each(information, function(info) { @>
+	<h1><@- info.get('name') @></h1>
+	<h4><@- info.get('address') @></h4>
+	<p><@- info.get('food_items') @></p>
+	<hr/>
+	<@ }); @> 
+</script>
+<script type="text/javascript">
+(function(win){
+	$(document).ready(function() {
+		var map = null, markers = [], lastOpenedInfoWindow = null, lastLocation = null, searchBox = null;
+		_.templateSettings = {
+			interpolate: /\<\@\=(.+?)\@\>/gim,
+			evaluate: /\<\@([\s\S]+?)\@\>/gim,
+			escape: /\<\@\-(.+?)\@\>/gim
+		};
 
-				var LocationInfo = Backbone.Collection.extend({
-					url: function() {
-						return "/location/" + this.id + "/info"
-					},
-					initialize: function(models, options) {
-						this.id = options.id;
-					}
-				});
+		var Locations = Backbone.Collection.extend({
+			// gets location objets from server filtering by latitude and longitude
+			url: function() {
+				return this.food ? "/locations?lat=" + this.lat + "&lon=" + this.lon + "&food=" + this.food : "/locations?lat=" + this.lat + "&lon=" + this.lon;
+			},
+			initialize: function(models, options) {
+				this.lat = options.lat;
+				this.lon = options.lon;
+				this.food = options.food;
+			}
+		});
 
-			    var LocationsMapView = Backbone.View.extend({
-			    	el: 'body',
-			    	render: function () {
-				        (new Locations).fetch({
-				        	success: function (locations) {
-				        		//adds markers to map
-				        		var bounds = new google.maps.LatLngBounds();
-				        		_.each(locations.models, function(location) {
-				        			var marker = new google.maps.Marker({
-								    	position: new google.maps.LatLng(location.get('lat') * 180 / Math.PI, location.get('lon') * 180 / Math.PI),
-								    	map: map
-								    });
-								    bounds.extend(marker.getPosition());
-								    google.maps.event.addListener(marker, 'click', function() { //should use event delegation here, performance concern
-								    	(new LocationInfo([], { id: location.id })).fetch({
-								    		success: function(information) {
+		var LocationInfo = Backbone.Collection.extend({
+			url: function() {
+				return "/location/" + this.id + "/info"
+			},
+			initialize: function(models, options) {
+				this.id = options.id;
+			}
+		});
 
-								    			var contentString = _.template($("#location_marker_info").html(),
-								    				{ information: information.models });
-								    			var infowindow = new google.maps.InfoWindow({
-		      										content: contentString
-		  										});
-		    									infowindow.open(map,marker);
-		    									lastOpenedInfoWindow = infowindow;
-								    		}
-								    	});
-								    	if (lastOpenedInfoWindow) { lastOpenedInfoWindow.close(); }
-									});
-								    markers.push(marker);
-				        		});
-				        		map.fitBounds(bounds); //re-center map to include all markers
-				        	}
-				    	});
+		var LocationsMapView = Backbone.View.extend({
+			el: 'body',
+			render: function (options) {
+				(new Locations([], options)).fetch({
+					success: function (locations) {
+						//remove old markers
+						removeAllMarkers(markers);
+				        if (locations.models.length) {
+				        	//add new markers to map
+				        	var bounds = new google.maps.LatLngBounds();
+			        		_.each(locations.models, function(location) {
+			        			var marker = new google.maps.Marker({
+			        				position: new google.maps.LatLng(location.get('lat') * 180 / Math.PI, location.get('lon') * 180 / Math.PI),
+			        				map: map
+			        			});
+			        			bounds.extend(marker.getPosition());
+							    google.maps.event.addListener(marker, 'click', function() { //should use event delegation here, performance concern
+							    	(new LocationInfo([], { id: location.id })).fetch({
+							    		success: function(information) {
+
+							    			var contentString = _.template($("#location_marker_info").html(),
+							    				{ information: information.models });
+							    			var infowindow = new google.maps.InfoWindow({
+							    				content: contentString
+							    			});
+							    			infowindow.open(map,marker);
+							    			lastOpenedInfoWindow = infowindow;
+							    		}
+							    	});
+							    	if (lastOpenedInfoWindow) { lastOpenedInfoWindow.close(); }
+							    });
+							    markers.push(marker);
+							});
+					        map.fitBounds(bounds); //re-center map to include all markers
+				        } else {
+				        	alert("Could not find any locations to match your search '" + locations.food + "'.");
+				        }
 				    }
-			    });
+				});
+			}
+		});
 
-				var Router = Backbone.Router.extend({
-			        routes: { "": "home" }
-			    });
+		var Router = Backbone.Router.extend({
+			routes: { "": "home" }
+		});
 
-			    (new Router).on('route:home', function() {
-			    	//render home page by showing map and adding markers
-					var mapOptions = { center: new google.maps.LatLng(37.73461, -122.39255), zoom: 15, zoomControl: true };
-		        	map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
-		        	(new LocationsMapView).render();
-			    });
+		(new Router).on('route:home', function() {
+	    	//render home page by showing map and adding markers
+	    	lastLocation = new google.maps.LatLng(37.73461, -122.39255)
+	    	var mapOptions = { center: lastLocation, zoom: 15, zoomControl: true };
+	    	map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+	    	searchBox = new google.maps.places.Autocomplete($("#address")[0]);
+  			searchBox.bindTo('bounds', map);
+	    	setupEventHandlers(map, lastLocation);
 
-			    Backbone.history.start();
+	    	$("#address").val("1679 Palou Avenue, San Francisco");
+	    	(new LocationsMapView).render({lat: lastLocation.lat(), lon: lastLocation.lng() });
+	    });
+
+		Backbone.history.start();
+
+		function setupEventHandlers(map, last) {
+			google.maps.event.addListener(searchBox, 'place_changed', function() {
+				var place = searchBox.getPlace();
+				if (!place.geometry) { 
+					alert("Could not find any location to match your search.  Please try again.");
+					return;
+				}
+				last = place.geometry.location;
+				map.setCenter(place.geometry.location);
+				(new LocationsMapView).render({
+					lat: place.geometry.location.lat(),
+					lon: place.geometry.location.lng(),
+					food: $("#food").val()
+				});
 			});
-		})(window);
-	</script>
+
+			$("#food").keyup(function(e) {
+				var foodText = $("#food").val() || null
+				if (e.which === 13) {
+					(new LocationsMapView).render({
+						lat: last.lat(),
+						lon: last.lng(),
+						food: foodText
+					});
+				}
+			});
+		}
+
+		function removeAllMarkers(markers) {
+			for(var i = 0; i < markers.length; i++) {
+				markers[i].setMap(null);
+			}
+			markers = [];
+		}
+	});
+})(window);
+</script>
 <% end %>
